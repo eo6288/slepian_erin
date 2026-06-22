@@ -1,4 +1,4 @@
-function varargout=mlerose(Hx,Gx,thini,params,algo,bounds,aguess)
+function varargout=mleros(Hx,Gx,thini,params,algo,bounds,aguess)
 % [thhat,logli,thini,scl,params,eflag,oput,grd,hes,Hk,k,opions,bounds]=...
 %          MLEROS(Hx,Gx,thini,params,algo,bounds,aguess)
 %
@@ -52,19 +52,19 @@ function varargout=mlerose(Hx,Gx,thini,params,algo,bounds,aguess)
 % EXAMPLE:
 %
 %% Perform a series of N simulations centered on th0
-% mlerose('demo1',N,th0)
+% mleros('demo1',N,th0)
 %% Statistical study of a series of simulations done using 'demo1'
-% mlerose('demo2','02-Oct-2014')
+% mleros('demo2','02-Oct-2014')
 %% Admittance/coherence study of a series of simulations
-% mlerose('demo3','02-Oct-2014')
+% mleros('demo3','02-Oct-2014')
 %% Covariance study of a series of simulations
-% mlerose('demo4','02-Oct-2014')
+% mleros('demo4','02-Oct-2014')
 %% One simulation and a chi-squared plot
-% mlerose('demo5')
+% mleros('demo5')
 % Attempting to find correlations where there is none
-% mlerose('demo6')
+% mleros('demo6')
 % Attempting to find the density contrast and compensation level
-% mlerose('demo7')
+% mleros('demo7')
 %
 % Last modified by fjsimons-at-alum.mit.edu, 06/25/2015
 
@@ -290,7 +290,7 @@ elseif strcmp(Hx,'demo1')
     % Form the maximum-likelihood estimate
     t0=clock;
     [thhat,logli,thini,scl,p,e,o,gr,hs,~,~,ops,bnds]=... %Erin removed covh from second argument
-	mlerose(Hx,Gx,[],p,[],[],th0);
+	mleros(Hx,Gx,[],p,[],[],th0);
     ts=etime(clock,t0);
 
     % Initialize the THZRO file
@@ -346,7 +346,7 @@ elseif strcmp(Hx,'demo1')
   % Initialize if all you want is to close the file
   if N==0
     [Hx,Gx,th0,p,k]=simulros(th0,params); 
-    [~,~,~,~,~,~,~,~,~,~,~,~,ops,bnds]=mlerose(Hx,Gx,[],[],'klose');
+    [~,~,~,~,~,~,~,~,~,~,~,~,ops,bnds]=mleros(Hx,Gx,[],[],'klose');
     good=1; avH=avH+1; 
     oswzerob(fids(1),th0,p,ops,bnds,fmts)
   end
@@ -445,7 +445,7 @@ elseif strcmp(Hx,'demo5')
   thini=[];
 
   % Perform the optimization, whatever the quality of the result
-  [thhat,~,logli,thini,scl,p,e,o,gr,hs]=mlerose(Hx,Gx,thini,p);
+  [thhat,~,logli,thini,scl,p,e,o,gr,hs]=mleros(Hx,Gx,thini,p);
 
   % Take a look at the unblurred gradient purely for fun, they should be
   % so small as to be immaterial
@@ -529,9 +529,9 @@ elseif strcmp(Hx,'demo6')
     [Hx,Gx,th0,p,k,Hk]=simulros0(th0,params,xver);
     
     % No correlation!
-    [thhat1,~,logli1,thinisc1,scl1,p1,e1,o1,gr1,hs1]=mlerose0(Hx,Gx,thini1,p,'con');
+    [thhat1,~,logli1,thinisc1,scl1,p1,e1,o1,gr1,hs1]=mleros0(Hx,Gx,thini1,p,'con');
     % Possible correlation!
-    [thhat2,~,logli2,thinisc2,scl2,p2,e2,o2,gr2,hs2]=mlerose(Hx,Gx,thini2,p,'con');
+    [thhat2,~,logli2,thinisc2,scl2,p2,e2,o2,gr2,hs2]=mleros(Hx,Gx,thini2,p,'con');
 
     % Maybe should change the cellnan in the main script
     if isnan(thhat1)
@@ -696,12 +696,12 @@ elseif  strcmp(Hx,'demo7')
     disp(sprintf('Trying compensation depth z2 = %i',round(z2(index))))
         
     % No correlation in the inversion!
-    [thhat1,~,logli1,thinisc1,scl1,p1,e1,o1,gr1,hs1,Hk1]=mlerose0(Hx,Gx,thini1,p,'con',-1);
+    [thhat1,~,logli1,thinisc1,scl1,p1,e1,o1,gr1,hs1,Hk1]=mleros0(Hx,Gx,thini1,p,'con',-1);
 
     %pause
     
     % Possible correlation in the inversion!
-    [thhat2,~,logli2,thinisc2,scl2,p2,e2,o2,gr2,hs2,Hk2]=mlerose(Hx,Gx,thini2,p,'con');
+    [thhat2,~,logli2,thinisc2,scl2,p2,e2,o2,gr2,hs2,Hk2]=mleros(Hx,Gx,thini2,p,'con');
 
     % pause
     
