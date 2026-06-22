@@ -1,0 +1,14 @@
+# Ignore everything
+*
+
+# Allow directories
+!*/
+
+# Track MATLAB files
+!*.m
+
+# Track Markdown files
+!*.md
+
+# Track this file
+!.gitignore
