@@ -237,17 +237,21 @@ if ~isstr(Hx)
     return
   end
   
-  % This is the entire-plane estimate (hence the factor 2!)
-  covh=hes2cov(-hes,scl,length(k(~~k))*2);
+  %Erin comment out next two lines to ignore the uncertainty quantification
+  %side of this script
+  % % This is the entire-plane estimate (hence the factor 2!)
+  % covh=hes2cov(-hes,scl,length(k(~~k))*2);
 
   % Talk!
   disp(sprintf(sprintf('\n%s : %s ',str0,repmat(str2,size(thhat))),...
 	       'Estimated theta',thhat.*scl))
-  disp(sprintf(sprintf('%s : %s\n ',str0,repmat(str2,size(thhat))),...
-	       'Asymptotic stds',sqrt(diag(covh))))
+  %Erin comment out next line to ignore the uncertainty quantification
+  %side of this script
+  % disp(sprintf(sprintf('%s : %s\n ',str0,repmat(str2,size(thhat))),...
+	%        'Asymptotic stds',sqrt(diag(covh))))
 
   % Generate output as needed
-  varns={thhat,covh,logli,thini,scl,params,eflag,oput,grd,hes,Hk,k,options,bounds};
+  varns={thhat,logli,thini,scl,params,eflag,oput,grd,hes,Hk,k,options,bounds}; %Erin removed covh from 2nd argument
   varargout=varns(1:nargout);
 elseif strcmp(Hx,'demo1')
   % If you run this again on the same date, we'll just add to THINI and
@@ -285,7 +289,7 @@ elseif strcmp(Hx,'demo1')
 
     % Form the maximum-likelihood estimate
     t0=clock;
-    [thhat,covh,logli,thini,scl,p,e,o,gr,hs,~,~,ops,bnds]=...
+    [thhat,logli,thini,scl,p,e,o,gr,hs,~,~,ops,bnds]=... %Erin removed covh from second argument
 	mlerose(Hx,Gx,[],p,[],[],th0);
     ts=etime(clock,t0);
 
@@ -332,7 +336,7 @@ elseif strcmp(Hx,'demo1')
 
 	% Print the optimization results and diagnostics to a file 
 	oswdiag(fids(4),fmt1,fmt3,logli,gr,hs,thhat,thini,scl,ts,e,o,....
-		var(Hx),momx,covh)
+		var(Hx),momx) %Erin removed covh from last argument
       end
     end
   end
