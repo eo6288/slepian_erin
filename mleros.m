@@ -1,5 +1,5 @@
 function varargout=mleros(Hx,Gx,thini,params,algo,bounds,aguess)
-% [thhat,logli,thini,scl,params,eflag,oput,grd,hes,Hk,k,opions,bounds]=...
+% [thhat,covh,logli,thini,scl,params,eflag,oput,grd,hes,Hk,k,opions,bounds]=...
 %          MLEROS(Hx,Gx,thini,params,algo,bounds,aguess)
 %
 % Performs a maximum-likelihood estimation for CORRELATED loads as in
@@ -32,6 +32,7 @@ function varargout=mleros(Hx,Gx,thini,params,algo,bounds,aguess)
 %
 % thhat    The maximum-likelihood estimate of the vector [scaled]:
 %          [D f2 r s2 nu rho], in Nm, and "nothing", see SIMULROS
+% covh     A Hessian-based covariance estimate of the parameters
 % logli    The maximized value of the likelihood
 % thini    The scaled starting guess used in the optimization
 % scl      The scaling applied as part of the optimization procedure
@@ -73,7 +74,7 @@ function varargout=mleros(Hx,Gx,thini,params,algo,bounds,aguess)
 % the D from being unrealistically low. If rho is zero poops out.
 
 if ~isstr(Hx)
-  defval('algo','unc') %erin changed this default of unc (will have to edit the description above"
+  defval('algo','unc')
   if strcmp(algo,'con')
     % Parameters for FMINCON in case that's what's being used
     bounds={[],[],... % Linear inequalities
@@ -197,61 +198,57 @@ if ~isstr(Hx)
 
   % And find the MLE! Work on scaled parameters
   try
-    switch algo
-     case 'unc'
-      % disp('Using FMINUNC for unconstrained optimization of LOGLIROS')
-      t0=clock;
-      [thhat,logli,eflag,oput,grd,hes]=...
-	  fminunc(@(theta) logliros(theta,params,Hk,k,scl),...
-		  thini,options);
-      ts=etime(clock,t0);
-      % Could here compare to our own estimates of grad and hes!
-     case 'con'
-      % New for FMINCON
-      options.Algorithm='active-set';
-      % disp('Using FMINCON for constrained optimization of LOGLIROS')
-      t0=clock;
-      [thhat,logli,eflag,oput,lmd,grd,hes]=...
-	  fmincon(@(theta) logliros(theta,params,Hk,k,scl),...
-		  thini,...
-      		  bounds{1},bounds{2},bounds{3},bounds{4},...
-                  bounds{5}./scl,bounds{6}./scl,bounds{7},...
-		  options);
-      ts=etime(clock,t0);
-     case 'klose'
-       % Simply a "closing" run to return the options
-       varargout=cellnan(nargout,1,1);
-       varargout{end-1}=options;
-       varargout{end}=bounds;
-       return
-    end
-    if xver==1
-      disp(sprintf('%8.3gs per %i iterations or %8.3gs per %i function counts',...
-		   ts/oput.iterations*100,100,ts/oput.funcCount*1000,1000))
-    else
-      disp(sprintf('\n'))
-    end
+      switch algo
+        case 'unc'
+          % disp('Using FMINUNC for unconstrained optimization of LOGLIROS')
+          t0=clock;
+          [thhat,logli,eflag,oput,grd,hes]=...
+	      fminunc(@(theta) logliros(theta,params,Hk,k,scl),...
+		      thini,options);
+          ts=etime(clock,t0);
+          % Could here compare to our own estimates of grad and hes!
+        case 'con'
+          % New for FMINCON
+          options.Algorithm='active-set';
+          % disp('Using FMINCON for constrained optimization of LOGLIROS')
+          t0=clock;
+          [thhat,logli,eflag,oput,lmd,grd,hes]=...
+	      fmincon(@(theta) logliros(theta,params,Hk,k,scl),...
+		      thini,...
+      		      bounds{1},bounds{2},bounds{3},bounds{4},...
+                      bounds{5}./scl,bounds{6}./scl,bounds{7},...
+		      options);
+          ts=etime(clock,t0);
+        case 'klose'
+          % Simply a "closing" run to return the options
+          varargout=cellnan(nargout,1,1);
+          varargout{end-1}=options;
+          varargout{end}=bounds;
+          return
+      end
+      if xver==1
+          disp(sprintf('%8.3gs per %i iterations or %8.3gs per %i function counts',...
+		       ts/oput.iterations*100,100,ts/oput.funcCount*1000,1000))
+      else
+          disp(sprintf('\n'))
+      end
   catch
     % If something went wrong, exit gracefully
     varargout=cellnan(nargout,1,1);
     return
   end
   
-  %Erin comment out next two lines to ignore the uncertainty quantification
-  %side of this script
-  % % This is the entire-plane estimate (hence the factor 2!)
-  % covh=hes2cov(-hes,scl,length(k(~~k))*2);
+  % This is the entire-plane estimate (hence the factor 2!)
+  covh=hes2cov(-hes,scl,length(k(~~k))*2);
 
   % Talk!
   disp(sprintf(sprintf('\n%s : %s ',str0,repmat(str2,size(thhat))),...
 	       'Estimated theta',thhat.*scl))
-  %Erin comment out next line to ignore the uncertainty quantification
-  %side of this script
-  % disp(sprintf(sprintf('%s : %s\n ',str0,repmat(str2,size(thhat))),...
-	%        'Asymptotic stds',sqrt(diag(covh))))
+  disp(sprintf(sprintf('%s : %s\n ',str0,repmat(str2,size(thhat))),...
+	       'Asymptotic stds',sqrt(diag(covh))))
 
   % Generate output as needed
-  varns={thhat,logli,thini,scl,params,eflag,oput,grd,hes,Hk,k,options,bounds}; %Erin removed covh from 2nd argument
+  varns={thhat,covh,logli,thini,scl,params,eflag,oput,grd,hes,Hk,k,options,bounds};
   varargout=varns(1:nargout);
 elseif strcmp(Hx,'demo1')
   % If you run this again on the same date, we'll just add to THINI and
@@ -289,7 +286,7 @@ elseif strcmp(Hx,'demo1')
 
     % Form the maximum-likelihood estimate
     t0=clock;
-    [thhat,logli,thini,scl,p,e,o,gr,hs,~,~,ops,bnds]=... %Erin removed covh from second argument
+    [thhat,covh,logli,thini,scl,p,e,o,gr,hs,~,~,ops,bnds]=...
 	mleros(Hx,Gx,[],p,[],[],th0);
     ts=etime(clock,t0);
 
@@ -312,6 +309,7 @@ elseif strcmp(Hx,'demo1')
     % the data size as more precision will be needed to navigate things
     % with smaller variance! At any rate, you want this not too low.
     optmin=Inf;
+
     % Maybe just print it and decide later? No longer e>0 as a condition.
     % e in many times is 0 even though the solution was clearly found, in
     % other words, this condition IS a way of stopping with the solution
@@ -336,7 +334,7 @@ elseif strcmp(Hx,'demo1')
 
 	% Print the optimization results and diagnostics to a file 
 	oswdiag(fids(4),fmt1,fmt3,logli,gr,hs,thhat,thini,scl,ts,e,o,....
-		var(Hx),momx) %Erin removed covh from last argument
+		var(Hx),momx,covh)
       end
     end
   end
