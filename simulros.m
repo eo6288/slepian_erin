@@ -67,9 +67,9 @@ defval('th0',[7e22 0.4 -0.75 0.0025 2 2e4]);
 % If not a demo...
 if ~isstr(th0)
   % Supply the needed parameters, keep the givens, extract to variables
-  fields={'DEL','g','z2','dydx','NyNx','blurs','kiso','quart', 'taper'};
+  fields={'DEL','g','z2','dydx','NyNx','blurs','kiso','quart'};
   defstruct('params',fields,...
-	    {[2670 630],9.81,35000,[20 20]*1e3,[128 128],3,NaN,0,0});
+	    {[2670 630],9.81,35000,[20 20]*1e3,[128 128],3,NaN,0});
   struct2var(params)
 
   % Here is the extra verification parameter
