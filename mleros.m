@@ -1,6 +1,6 @@
-function varargout=mleros(Hx,Gx,thini,params,algo,bounds,aguess) 
+function varargout=mleros(Hx,Gx,thini,params,algo,bounds,aguess)
 % [thhat,covh,logli,thini,scl,params,eflag,oput,grd,hes,Hk,k,opions,bounds]=...
-%          MLEROS(Hx,Gx,thini,params,algo,bounds,aguess) %change because added lpars?
+%          MLEROS(Hx,Gx,thini,params,algo,bounds,aguess)
 %
 % Performs a maximum-likelihood estimation for CORRELATED loads as in
 % Olhede & Simons (2013) by minimization using FMINUNC/FMINCON.
@@ -92,7 +92,7 @@ if ~isstr(Hx)
   str2='%12.5g ';
 
   % Supply the needed parameters, keep the givens, extract to variables
-  fields={'DEL','g','z2','dydx','NyNx','blurs','kiso'}; %erin: 'quart', 'taper'? 
+  fields={'DEL','g','z2','dydx','NyNx','blurs','kiso'};
   defstruct('params',fields,...
 	    {[2670 630],9.81,35000,[20 20]*1e3,sqrt(length(Hx))*[1 1],2,NaN});
   struct2var(params)
@@ -238,8 +238,9 @@ if ~isstr(Hx)
     return
   end
   
+
   % This is the entire-plane estimate (hence the factor 2!)
-  covh=hes2cov(-hes,scl,length(k(~~k))*2);
+  covh=hes2cov(-hes,length(k(~~k))*2);
 
   % Talk!
   disp(sprintf(sprintf('\n%s : %s ',str0,repmat(str2,size(thhat))),...
@@ -278,7 +279,6 @@ elseif strcmp(Hx,'demo1')
 
   % Set N to zero to simply close THZERO out
   for index=1:N
-
     % Simulate data from the same lithosphere, watch the blurring
     [Hx,Gx,th0,p,k]=simulros(th0,params);
 
@@ -287,13 +287,13 @@ elseif strcmp(Hx,'demo1')
 
     % Form the maximum-likelihood estimate
     t0=clock;
-    [thhat,covh,logli,thini,scl,p,e,o,gr,hs,~,~,lpars,~]=...
-	mleros(Hx,Gx,[],p,[],[],th0);
+    [thhat,covh,logli,thini,scl,p,e,o,gr,hs,~,~,ops,bnds]=...
+	    mleros(Hx,Gx,[],p,[],[],th0);
     ts=etime(clock,t0);
 
     % Initialize the THZRO file
     if index==1
-      oswzerob(fids(1),th0,p,lpars,fmts)
+      oswzerob(fids(1),th0,p,ops,bnds,fmts)
     end
 
     % If a model was found, keep the results, if not, they're all NaNs
@@ -345,9 +345,9 @@ elseif strcmp(Hx,'demo1')
   % Initialize if all you want is to close the file
   if N==0
     [Hx,Gx,th0,p,k]=simulros(th0,params); 
-    [~,~,~,~,~,~,~,~,~,~,~,~,lpars]=mleros(Hx,Gx,[],[],'klose');
+    [~,~,~,~,~,~,~,~,~,~,~,~,ops,bnds]=mleros(Hx,Gx,[],[],'klose');
     good=1; avH=avH+1; 
-    oswzerob(fids(1),th0,p,lpars,fmts)
+    oswzerob(fids(1),th0,p,ops,bnds,fmts)
   end
   
   if good>=1 
@@ -498,7 +498,9 @@ elseif strcmp(Hx,'demo5')
 
   % Time to rerun LOGLIROS one last time at the solution
   [L,~,momx]=logliros(thhat,p,Hk,k,scl);
-  
+
+keyboard
+
   % Better feed this to the next code, now it's redone inside
   mlechiplos(2,Hk,thhat,scl,p,ah,0,th0,covth,E,v);
 elseif strcmp(Hx,'demo6')
