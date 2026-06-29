@@ -119,15 +119,6 @@ if ~isstr(Hx)
   if abs(thini(3))>1
     thini(3)=rand*2-1;
   end
-
-  %erin add below, not sure if it is necessary yet, there is a problem with
-  %scl being empty in demo2
-  if ~isempty(inputname(2)) || any(aguess~=thini)
-    scl=10.^round(log10(abs(thini)));
-    disp(sprintf(sprintf('\n%s : %s ',str0,repmat(str1,size(scl))),...
-		 'Scaling',scl))
-  end
-
   disp(sprintf(sprintf('%s : %s ',str0,repmat(str2,size(thini))),...
 	       'Starting theta',thini))
   
@@ -282,7 +273,7 @@ if ~isstr(Hx)
   varargout=varns(1:nargout);
 elseif strcmp(Hx,'demo1')
   % If you run this again on the same date, we'll just add to THINI and
-  % THHAT but you will start with a blank THZERO. See 'demo2'
+  % THHAT but you will start with a blank THZRO. See 'demo2'
   % How many simulations? the second argument after the demo id
   defval('Gx',[]);
   N=Gx; clear Gx
@@ -297,7 +288,6 @@ elseif strcmp(Hx,'demo1')
 
   % The number of parameters to solve for
   np=6;
-    
   % Open files and return format strings
   [fids,fmts,fmti]=osopen(np);
  
@@ -306,7 +296,7 @@ elseif strcmp(Hx,'demo1')
   % Initialize the average Hessian
   avH=zeros(np,np);
 
-  % Set N to zero to simply close THZERO out
+  % Set N to zero to simply close THZRO out
   for index=1:N
     % Simulate data from the same lithosphere, watch the blurring
     [Hx,Gx,th0,p,k]=simulros(th0,params);
@@ -362,11 +352,11 @@ elseif strcmp(Hx,'demo1')
 	fprintf(fids(3),fmts{1},thini.*scl);
 
 	% Print the optimization results and diagnostics to a file 
-        oswdiag(fids(4),fmts,lpars,thhat,thini,scl,ts,var(Hx),covh)
+    oswdiag(fids(4),fmts,lpars,thhat,thini,scl,ts,var(Hx),covh)
       end
     end
   end
-  % If there was any success at all, finalize the THZERO file
+  % If there was any success at all, finalize the THZRO file
   % If for some reason this didn't end well, do an N==0 run.
 
   % Initialize if all you want is to close the file
@@ -406,8 +396,7 @@ elseif strcmp(Hx,'demo2')
   np=6;
 
   % Load everything you know about this simulation
-  [th0,thhats,params,truecov,covavhs,thpix,~,~,~,~,momx]=osload(datum); %mleosl also has [covXpix,covF0] at the end as output
-  %[th0,thhats,params,truecov,E,v,~,~,momx]=osload(datum);
+  [th0,thhats,params,truecov,~,~,E,v,~,~,momx]=osload(datum);
 
   % Report the findings of the moment parameters
   disp(sprintf('m(m(Xk)) %f m(v(Xk)) %f m(magic) %s v(magic) %f',...
@@ -475,7 +464,7 @@ elseif strcmp(Hx,'demo5')
   thini=[];
 
   % Perform the optimization, whatever the quality of the result
-  [thhat,~,logli,thini,scl,p,e,o,gr,hs]=mleros(Hx,Gx,thini,p);
+  [thhat,~,lpars,scl,~,p]=mleros(Hx,Gx,thini,p);
 
   % Take a look at the unblurred gradient purely for fun, they should be
   % so small as to be immaterial
