@@ -70,7 +70,7 @@ function varargout=mleros(Hx,Gx,thini,params,algo,bounds,aguess)
 % Attempting to find the density contrast and compensation level
 % mleros('demo7')
 %
-% Last modified by fjsimons-at-alum.mit.edu, 06/23/2026
+% Last modified by fjsimons-at-alum.mit.edu, 06/29/2026
 
 % NOTE: There are demonstrably bad solutions when r is close to 0 and f
 % is close to -1 and 1. Fix in bounding? Ignore, fix later? Also, keep
@@ -152,10 +152,8 @@ if ~isstr(Hx)
   k=knums(params);
   
   % Modify to demean
-  disp('NOT DEMEAN BOTH DATA SETS')
   Hx(:,1)=Hx(:,1)-mean(Hx(:,1));
   Gx=Gx-mean(Gx);
-  % Let us NOT demean and see where we end up...
 
   % Turn the observation vector to the spectral domain
   Hk(:,1)=tospec(Tx(:).*Hx(:,1),params);
@@ -188,7 +186,11 @@ if ~isstr(Hx)
 
   % Set the parallel option to (never) use it for the actual optimization
   % Doesn't seem to do much when we supply our own gradient
-  options.UseParallel='always';
+  if canUseParallelPool
+      options.UseParallel='always';
+  else
+      labindex=1;
+  end
 
   if blurs==0 || blurs==1
     % Use the analytical gradient in the optimization, rarely a good idea
@@ -286,8 +288,14 @@ elseif strcmp(Hx,'demo1')
   % What fixed-parameter set? The FOURTH argument after the demo id
   defval('params',[]);
 
+  % Also work on puny computers
+  if ~canUseParallelPool
+      labindex=1;
+  end
+
   % The number of parameters to solve for
   np=6;
+    
   % Open files and return format strings
   [fids,fmts,fmti]=osopen(np);
  
@@ -312,7 +320,7 @@ elseif strcmp(Hx,'demo1')
 
     % Initialize the THZRO file... note that the bounds may change
     % between simulations, and only one gets recorded here
-    if ~any(isnan(thhat)) && index==1 % && labindex==1
+    if ~any(isnan(thhat)) && index==1 && labindex==1
       oswzerob(fids(1),th0,p,lpars,fmts)
     end
 
@@ -352,7 +360,7 @@ elseif strcmp(Hx,'demo1')
 	fprintf(fids(3),fmts{1},thini.*scl);
 
 	% Print the optimization results and diagnostics to a file 
-    oswdiag(fids(4),fmts,lpars,thhat,thini,scl,ts,var(Hx),covh)
+        oswdiag(fids(4),fmts,lpars,thhat,thini,scl,ts,var(Hx),covh)
       end
     end
   end
@@ -380,12 +388,12 @@ elseif strcmp(Hx,'demo1')
     % Of course when we don't have the truth we'll build the covariance
     % from the single estimate that we have just obtained. This
     % covariance would then be the only thing we'd have to save.
-    % if labindex==1
+    if labindex==1
         oswzeroe(fids(1),sclth0,avH,good,F,covF,fmti)
-    % end
+    end
   end
 
-  % Put both of these also into the thzro file 
+  % Put both of these also into the THZRO file 
   fclose('all');
 elseif strcmp(Hx,'demo2')
   defval('Gx',[]);
@@ -396,14 +404,14 @@ elseif strcmp(Hx,'demo2')
   np=6;
 
   % Load everything you know about this simulation
-  [th0,thhats,params,truecov,~,~,E,v,~,~,momx]=osload(datum);
+  [th0,thhats,params,truecov,covavhs,~,E,v,~,~,momx,covXpix,covF0]=osload(datum);
 
   % Report the findings of the moment parameters
   disp(sprintf('m(m(Xk)) %f m(v(Xk)) %f m(magic) %s v(magic) %f',...
 	      mean(momx),var(momx(:,end))))
 
   % Plot it all - perhaps some selection on optis?
-  [ah,ha]=mleplos(thhats,th0,truecov,E,v,params,sprintf('MLEROS-%s',datum));
+  [ah,ha]=mleplos(thhats,th0,covF0,covavhs,covXpix,E,v,params,sprintf('MLEROS-%s',datum));
 
   % Print the figure! Don't forget the degs.pl script
   figna=figdisp([],sprintf('%s_%s',Hx,datum),[],1);
@@ -419,7 +427,7 @@ elseif strcmp(Hx,'demo3')
   np=6;
 
   % Load everything you know about this simulation
-  [th0,thhats,params,truecov,E,v]=osload(datum);
+  [th0,thhats,params,truecov,~,~,E,v]=osload(datum);
 
   % Plot it all: one admittance/coherence curve for every estimate
   [ah,ha]=admiplos(thhats(randi(length(thhats),100,1),:),th0,truecov,E,v,params,[],length(thhats));
@@ -437,7 +445,7 @@ elseif strcmp(Hx,'demo4')
   np=6;
 
   % Load everything you know about this simulation
-  [th0,thhats,params,truecov,E,v,obscov,sclcov]=osload(datum);
+  [th0,thhats,params,truecov,~,~,E,v,obscov,sclcov]=osload(datum);
 
   % Make the plot
   ah=covplos(2,sclcov,obscov,truecov,params,thhats,th0,E,v,'ver');
@@ -464,7 +472,7 @@ elseif strcmp(Hx,'demo5')
   thini=[];
 
   % Perform the optimization, whatever the quality of the result
-  [thhat,~,lpars,scl,~,p]=mleros(Hx,Gx,thini,p);
+  [thhat,~,logli,thini,scl,p,e,o,gr,hs]=mleros(Hx,Gx,thini,p);
 
   % Take a look at the unblurred gradient purely for fun, they should be
   % so small as to be immaterial
