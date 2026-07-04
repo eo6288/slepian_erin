@@ -186,11 +186,11 @@ if ~isstr(Hx)
 
   % Set the parallel option to (never) use it for the actual optimization
   % Doesn't seem to do much when we supply our own gradient
-  if canUseParallelPool
-      options.UseParallel='always';
-  else
-      labindex=1;
-  end
+  % if canUseParallelPool
+  %     options.UseParallel='always';
+  % else
+  %     labindex=1;
+  % end
 
   if blurs==0 || blurs==1
     % Use the analytical gradient in the optimization, rarely a good idea
@@ -288,10 +288,10 @@ elseif strcmp(Hx,'demo1')
   % What fixed-parameter set? The FOURTH argument after the demo id
   defval('params',[]);
 
-  % Also work on puny computers
-  if ~canUseParallelPool
-      labindex=1;
-  end
+  % % Also work on puny computers
+  % if ~canUseParallelPool
+  %     labindex=1;
+  % end
 
   % The number of parameters to solve for
   np=6;
@@ -320,7 +320,7 @@ elseif strcmp(Hx,'demo1')
 
     % Initialize the THZRO file... note that the bounds may change
     % between simulations, and only one gets recorded here
-    if ~any(isnan(thhat)) && index==1 && labindex==1
+    if ~any(isnan(thhat)) && index==1 %&& labindex==1
       oswzerob(fids(1),th0,p,lpars,fmts)
     end
 
@@ -388,9 +388,9 @@ elseif strcmp(Hx,'demo1')
     % Of course when we don't have the truth we'll build the covariance
     % from the single estimate that we have just obtained. This
     % covariance would then be the only thing we'd have to save.
-    if labindex==1
+    %if labindex==1
         oswzeroe(fids(1),sclth0,avH,good,F,covF,fmti)
-    end
+    %ends
   end
 
   % Put both of these also into the THZRO file 
@@ -428,7 +428,6 @@ elseif strcmp(Hx,'demo3')
 
   % Load everything you know about this simulation
   [th0,thhats,params,truecov,~,~,E,v]=osload(datum);
-
   % Plot it all: one admittance/coherence curve for every estimate
   [ah,ha]=admiplos(thhats(randi(length(thhats),100,1),:),th0,truecov,E,v,params,[],length(thhats));
   
@@ -448,7 +447,7 @@ elseif strcmp(Hx,'demo4')
   [th0,thhats,params,truecov,~,~,E,v,obscov,sclcov]=osload(datum);
 
   % Make the plot
-  ah=covplos(2,sclcov,obscov,truecov,params,thhats,th0,E,v,'ver');
+  ah=covplos(2,sclcov,obscov,params,thhats,E,v,'ver'); %erin change on Tues after mleplos corrections
 
   figna=figdisp([],sprintf('%s_%s',Hx,datum),[],1);
   system(sprintf('epstopdf %s.eps',figna)); 
