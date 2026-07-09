@@ -33,8 +33,8 @@ function [th0,thhats,params,covX,covavhs,thpix,E,v,obscov,sclcovX,momx,covXpix,c
 %
 % OSOPEN, OSRDIAG, TRIMIT, MLEOS etc
 %
-% Last modified by fjsimons-at-alum.mit.edu, 04/15/2025
 % Last modified by olwalbert-at-princeton.edu, 04/15/2025
+% Last modified by fjsimons-at-alum.mit.edu, 06/29/2026
 
 % Who called? Work this into the filenames
 [~,nn]=star69;
@@ -67,16 +67,11 @@ np=size(thinis,2);
 % Report what it is trying to read
 disp(sprintf('\n%s reading log files:\n\n%s\n%s\n%s\n%s',...
              upper(mfilename),f1,f2,f3,f4))
+
 % Then load and display what we have
 fid=fopen(f1,'r');
 [th0,params,sclth0,avhsz,F0,covF0,nh]=osrzero(fid,np);
 fclose(fid);
-
-if isempty(sclth0)
-    sclth0 = 10.^round(log10(th0)); %temporary poor fix
-end
-
-matscl = sclth0(:)*sclth0(:)';
 
 % Load the optimization diagnostics, which should duplicate f2 and f3
 [thhat,thini,tseiter,scl,L,gam,hes,optis,momx,covX]=osrdiag(f4,pwd,np); 
@@ -92,6 +87,7 @@ end
 % Here you might confirm that the hokey variances are on average further
 % from the truth, negatively biased, than the MLE estimates. 
 matscl=[sclth0(:)*sclth0(:)'];
+
 % Bring all of them on a common scaling, if it should have differed...
 if sum(sum(abs(diff(scl,1)),1)) || sum(abs(sclth0-unique(scl,'rows')))
   % Remember the way the scaling works for Hessians (which are inverse th0)
@@ -131,8 +127,13 @@ covXpix=inv(trilosi(hes(pix,:))./matscl)/df;
 pp=trilosi(covX(pix,:));
 diferm(covXpix(:)./matscl(:),pp(:)./matscl(:),3)
 
-% The below should be the same as covF0 since it came out of OSWZEROE, not at zero-k
-[~,covth0]=fishiosl(k,th0,params,1);
+try
+    % The below should be the same as covF0 since it came out of OSWZEROE, not at zero-k
+    [~,covth0]=fishiosl(k,th0,params,1);
+catch
+    % Stealing these lines out of COVTHROS for now, until that changes to FISHIROS
+    covth0=covthros(th0./sclth0,params,k,sclth0);
+end
 
 % This needs to be identical except in a few digits compared to the size
 diferm(covth0(:)./matscl(:),covF0(:)./matscl(:),3)
