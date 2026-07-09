@@ -39,7 +39,7 @@ function varargout=mleplos(thhats,th0,covF0,covavhs,covXpix,E,v,params,name,thpi
 % Tested on 8.5.0.197613 (R2015a)
 %
 % Last modified by olwalbert-at-princeton.edu, 12/11/2025
-% Last modified by fjsimons-at-alum.mit.edu, 06/29/2026
+% Last modified by fjsimons-at-alum.mit.edu, 07/08/2026
 
 defval('xver',1)
 defval('ifinv',[1 1 1])
@@ -53,7 +53,7 @@ sclth0=10.^round(log10(abs(th0)));
 movit=0.01;
 yls=[-0.0 0.6];
 % Determines the rounding on the y axis 
-rondo=1e3; %erin changed this
+rondo=1e3;
 % Sets the format for the estimated/true plot labels
 
 % The number of parameters
@@ -63,29 +63,17 @@ if np==6
   labs0={'D_0','f^2_0','r_0','\sigma^2_0','\nu_0','\rho_0',};
   flabs={'flexural rigidity D','loading ratio f^2','correlation coefficient','variance \sigma^2','smoothness \nu','range \rho'};
   unts={'Nm' [] [] [] [] []};
-  pcomb = [
-            4 5
-            4 6
-            5 6 
-            ];
 elseif np==5
   labs={'D','f^2','\sigma^2','\nu','\rho',};
   labs0={'D_0','f^2_0','\sigma^2_0','\nu_0','\rho_0'};
   flabs={'flexural rigidity D','loading ratio f^2','correlation coefficient','variance \sigma^2','smoothness \nu','range \rho'};
   unts={'Nm' [] [] [] []};
-  pcomb = [
-            3 4
-            3 5
-            4 5
-        ];
 elseif np==3
   labs={'\sigma^2','\nu','\rho',};
   labs0={'\sigma^2_0','\nu_0','\rho_0'};
   flabs={'variance \sigma^2','smoothness \nu','range \rho'};
   unts={[] [] []};
-  pcomb = nchoosek(1:np,2);
 end
-
 
 % Append the scaling of each Matern parameter axis if it is not 1
 for i=1:np                                                       
@@ -418,8 +406,12 @@ if xver==1
     figure(2)
     fig2print(gcf,'landscape')
     clf
-
-    [ah,ha]=krijetem(subnum(1,3));
+    pcomb=nchoosek(1:np,2);
+    try
+        [ah,ha]=krijetem(subnum(size(pcomb,1)/3,3));
+    catch
+        [ah,ha]=krijetem(subnum(size(pcomb,1)/2,3));
+    end        
 
     % Scale everything
     mobss=mobss./sclth0;
@@ -437,10 +429,11 @@ if xver==1
     
     t=linspace(0,2*pi);
 
-    for ind=1:size(pcomb,1) %this makes the univariate/bivariate case consistent
+    for ind=1:size(pcomb,1)
         axes(ah(ind))
-        % Find the pairwise combinations for the cross-plot convention: s2-nu,
-        % s2-rho, nu-rho
+        % Find the pairwise combinations for the cross-plot convention:
+        % which for the three-parameter univariate case is 
+        % s2-nu, s2-rho, nu-rho
         p1=pcomb(ind,1); p2=pcomb(ind,2);
 
         % Observed means and AVERAGE NUMERICAL HESSIAN standard deviations
@@ -466,7 +459,6 @@ if xver==1
         o2(ind)=plot([mobss(p1) mobss(p1)],...
 		     mobss(p2)+pstats*sobss(p2),'LineWidth',1);
         hold off
-
         % Label around the truths; note that Figure 1's tick labels are about
         % the mean (mobss) not the truth (th0), differently here
         set(ah(ind),'xtick',round(rondo*[th0(p1)+vstats*sobss(p1)])/rondo,...
@@ -485,10 +477,11 @@ if xver==1
                     repmat(round(rondo*[th0(p2)+...
                     vstats([1 3 5]).*sobss(p2)])./rondo,2,1),...
                      '-','Color',grey);
+
         % Color mix
-        %cmix=[0 0 0]; cmix([p1 p2])=1/2;
-        %set([p(ind) m(ind)],'MarkerFaceColor',cmix,'MarkerEdgeColor',cmix,'MarkerSize',2)
-        %Dull colors
+        cmix=[0 0 0]; 
+        set([p(ind) m(ind)],'MarkerFaceColor',cmix,'MarkerEdgeColor',cmix,'MarkerSize',2)
+        % Dull colors
         set([p(ind) m(ind)],'MarkerFaceColor',grey,'MarkerEdgeColor',grey,'MarkerSize',2)
 
         % Cosmetix
