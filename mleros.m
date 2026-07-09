@@ -447,7 +447,7 @@ elseif strcmp(Hx,'demo4')
   [th0,thhats,params,truecov,~,~,E,v,obscov,sclcov]=osload(datum);
 
   % Make the plot
-  ah=covplos(2,sclcov,obscov,params,thhats,E,v,'ver'); %erin change on Tues after mleplos corrections
+  ah=covplos(2,sclcov,obscov,params,thhats,E,v,'ver');
 
   figna=figdisp([],sprintf('%s_%s',Hx,datum),[],1);
   system(sprintf('epstopdf %s.eps',figna)); 
