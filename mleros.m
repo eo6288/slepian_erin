@@ -390,7 +390,7 @@ elseif strcmp(Hx,'demo1')
     % covariance would then be the only thing we'd have to save.
     %if labindex==1
         oswzeroe(fids(1),sclth0,avH,good,F,covF,fmti)
-    %ends
+    %end
   end
 
   % Put both of these also into the THZRO file 
