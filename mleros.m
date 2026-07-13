@@ -288,7 +288,7 @@ elseif strcmp(Hx,'demo1')
   % What fixed-parameter set? The FOURTH argument after the demo id
   defval('params',[]);
 
-  % % Also work on puny computers
+  % Also work on puny computers
   % if ~canUseParallelPool
   %     labindex=1;
   % end
@@ -388,9 +388,9 @@ elseif strcmp(Hx,'demo1')
     % Of course when we don't have the truth we'll build the covariance
     % from the single estimate that we have just obtained. This
     % covariance would then be the only thing we'd have to save.
-    %if labindex==1
+    % if labindex==1
         oswzeroe(fids(1),sclth0,avH,good,F,covF,fmti)
-    %ends
+    % end
   end
 
   % Put both of these also into the THZRO file 
@@ -409,7 +409,7 @@ elseif strcmp(Hx,'demo2')
   % Report the findings of the moment parameters
   disp(sprintf('m(m(Xk)) %f m(v(Xk)) %f m(magic) %s v(magic) %f',...
 	      mean(momx),var(momx(:,end))))
-
+  
   % Plot it all - perhaps some selection on optis?
   [ah,ha]=mleplos(thhats,th0,covF0,covavhs,covXpix,E,v,params,sprintf('MLEROS-%s',datum));
 
@@ -428,6 +428,7 @@ elseif strcmp(Hx,'demo3')
 
   % Load everything you know about this simulation
   [th0,thhats,params,truecov,~,~,E,v]=osload(datum);
+
   % Plot it all: one admittance/coherence curve for every estimate
   [ah,ha]=admiplos(thhats(randi(length(thhats),100,1),:),th0,truecov,E,v,params,[],length(thhats));
   
@@ -447,7 +448,7 @@ elseif strcmp(Hx,'demo4')
   [th0,thhats,params,truecov,~,~,E,v,obscov,sclcov]=osload(datum);
 
   % Make the plot
-  ah=covplos(2,sclcov,obscov,params,thhats,E,v,'ver'); %erin change on Tues after mleplos corrections
+  ah=covplos(2,sclcov,obscov,params,thhats,E,v,'ver');
 
   figna=figdisp([],sprintf('%s_%s',Hx,datum),[],1);
   system(sprintf('epstopdf %s.eps',figna)); 
@@ -644,7 +645,9 @@ elseif strcmp(Hx,'demo6')
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   axes(ah(2))
   % Note that SOME people use a different parameterization (b vs 1/b)
-  h=qqplot(X,ProbDistUnivParam('gamma',[df/2 2])); 
+  h=qqplot(X,ProbDistUnivParam('gamma',[df/2 2])); %I get a warning that this is removed in new editions 
+                                                   % of MATLAB, change to
+                                                   % makedist('Gamma','a',df/2,'b',2)?
   axis square; box on
   set(h(1),'MarkerE','k')  
   set(h(3),'LineS','-','Color',grey)
