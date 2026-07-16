@@ -208,7 +208,7 @@ if ~isstr(Hx)
           % disp('Using FMINUNC for unconstrained optimization of LOGLIROS')
           t0=clock;
           [thhat,logli,eflag,oput,grd,hes]=...
-	      fminunc(@(theta) logliros(theta,params,Hk,k,scl),...
+	      fminunc(@(theta) logliros(k,theta,params,Hk,scl),...
 		      thini,options);
           ts=etime(clock,t0);
           % Could here compare to our own estimates of grad and hes!
@@ -218,7 +218,7 @@ if ~isstr(Hx)
           % disp('Using FMINCON for constrained optimization of LOGLIROS')
           t0=clock;
           [thhat,logli,eflag,oput,lmd,grd,hes]=...
-	      fmincon(@(theta) logliros(theta,params,Hk,k,scl),...
+	      fmincon(@(theta) logliros(k,theta,params,Hk,scl),...
 		      thini,...
       		      bounds{1},bounds{2},bounds{3},bounds{4},...
                       bounds{5}./scl,bounds{6}./scl,bounds{7},...
@@ -255,7 +255,7 @@ if ~isstr(Hx)
 	       'Asymptotic stds',sqrt(diag(covh))))
 
   % Here we compute the moment parameters and recheck the likelihood
-  [L, ~,momx]=logliros(scl.*thhat,params,Hk,k,scl);
+  [L, ~,momx]=logliros(k,scl.*thhat,params,Hk,scl);
   diferm(L,logli)
   %logliros (as opposed to logliosl) doesn't have the ability to make vr
 
@@ -472,10 +472,11 @@ elseif strcmp(Hx,'demo5')
   thini=[];
 
   % Perform the optimization, whatever the quality of the result
-  [thhat,~,logli,thini,scl,p,e,o,gr,hs]=mleros(Hx,Gx,thini,p);
-
+  [thhat,~,logli,scl,thini,p,~]=mleros(Hx,Gx,thini,p);
+  
   % Take a look at the unblurred gradient purely for fun, they should be
   % so small as to be immaterial
+  
   grobs=-nanmean(gammakros(k,thhat.*scl,p,Hk))';
   
   % Take a look at the unblurred theoretical covariance at the estimate,
@@ -525,7 +526,7 @@ elseif strcmp(Hx,'demo5')
   % Maybe we should show different covariances than the predicted ones??
 
   % Time to rerun LOGLIROS one last time at the solution
-  [L,~,momx]=logliros(thhat,p,Hk,k,scl);
+  [L,~,momx]=logliros(k,thhat,p,Hk,scl);
 
   % Better feed this to the next code, now it's redone inside
   mlechiplos(2,Hk,thhat,scl,p,ah,0,th0,covth,E,v);
